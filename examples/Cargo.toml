@@ -1,0 +1,33 @@
+[package]
+name = "examples"
+version = "0.1.0"
+authors = ["Lucio Franco <luciofranco14@gmail.com>"]
+edition = "2018"
+publish = false
+license = "MIT"
+
+[[bin]]
+name = "my-plugin"
+path = "./my-plugin/server.rs"
+
+[[bin]]
+name = "plugin-client"
+path = "./plugin-client/client.rs"
+
+
+[[bin]]
+name = "actor-test"
+path = "./actor-test/main.rs"
+
+[dependencies]
+plugin-registry = { path = "../plugin-registry" }
+tonic = { version = "0.4.0", features = ["tls"] }
+tokio = { version = "1.2.0", features = ["full"] }
+clap = "3.0.0-beta.2"
+async-stream = "0.3"
+futures = { version = "0.3.12", features = ["alloc"] }
+tera = "1.7.0"
+once_cell = "1.7.2"
+actix = "0.11.0-beta.3"
+crossbeam = "0.8.0"
+crossbeam-channel = "0.5.0"

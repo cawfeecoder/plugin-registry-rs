@@ -1,0 +1,24 @@
+[package]
+name = "plugin-registry"
+version = "0.1.0"
+authors = ["nfrush"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tonic = { version = "0.4.0", features = ["tls"] }
+prost = "0.7"
+tokio = { version = "1.2.0", features = ["full"] }
+tokio-stream = { version =  "0.1.3", features = ["net"] }
+async-stream = "0.3"
+futures = { version = "0.3.12", features = ["alloc"] }
+tower = { version = "0.4" }
+prost-types = "0.7"
+clap = "3.0.0-beta.2"
+async-process = "1.0.2"
+async-std = "1.9.0"
+futures-lite = "1.11.3"
+
+[build-dependencies]
+tonic-build = { version = "0.4.0", features = ["prost"] }

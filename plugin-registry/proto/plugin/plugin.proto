@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.github.nfrush.plugin";
+option java_outer_classname = "PluginProto";
+
+package plugin;
+
+message Function {
+    string name = 1;
+    map<string, string> args = 2;
+    map<string, string> rets = 3;
+}
+
+message ListFunctionResponse {
+    repeated Function functions = 1;
+}
+
+message ExecuteRequest {
+    string function_name = 1;
+    map<string, bytes> args = 2;
+}
+
+message ExecuteResponse {
+    map<string, bytes> rets = 1;
+}
+
+message Empty {}
+
+service Plugin {
+    rpc ListFunctions(Empty) returns (ListFunctionResponse) {}
+    rpc Execute(ExecuteRequest) returns (ExecuteResponse) {}
+}
