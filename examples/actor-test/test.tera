@@ -1,1 +1,3 @@
 hi it is a {{ test_function(message="hello world!") | get(key="stdout") | to_string }}!
+
+hi it is a {{ test_function(message="hello world!") | get(key="stdout") | to_string }}!

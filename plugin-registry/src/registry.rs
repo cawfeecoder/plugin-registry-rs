@@ -21,7 +21,7 @@ pub struct Plugin {
     plugin_type: String,
     version: String,
     active: Arc<Mutex<Option<Child>>>,
-    client: Option<PluginClient<tonic::transport::channel::Channel>>
+    client: Arc<Mutex<Option<PluginClient<tonic::transport::channel::Channel>>>>
 }
 
 #[derive(Debug)]
@@ -37,9 +37,9 @@ pub struct PluginRegistry {
 impl PluginRegistry {
     pub async fn dispense(&mut self, plugin_name: String) -> Result<PluginClient<tonic::transport::channel::Channel>, String> {
         match self.plugins.get_mut(&plugin_name) {
-            Some(ref mut x) => {
+            Some(x) => {
                 if x.active.lock().unwrap().is_some() {
-                    return Ok(x.client.clone().unwrap());
+                    return Ok(x.client.lock().unwrap().clone().unwrap());
                 }
                 let handle = Command::new("sh")
                                         .arg("-c")
@@ -49,11 +49,12 @@ impl PluginRegistry {
                                         .spawn();
                 match handle {
                     Ok(y) => {
-                        x.active = Arc::new(Mutex::new(Some(y)));
+                        let mut active = x.active.lock().unwrap();
+                        *active = Some(y);
                         let mut retry: i32 = 0; 
                         let mut channel: Result<tonic::transport::channel::Channel, tonic::transport::Error>;
                         let path_dest = format!("/tmp/tonic/{}", plugin_name);
-                        while retry < 3 {
+                        while retry < 10 {
                             let path_dest = path_dest.clone();
                             channel = Endpoint::try_from("http://[::]:50051").unwrap()
                                 .connect_with_connector(service_fn(move |_: Uri| {
@@ -65,8 +66,10 @@ impl PluginRegistry {
                             .await;
 
                             match channel {
-                                Ok(x) => {
-                                    let client = PluginClient::new(x);
+                                Ok(z) => {
+                                    let client = PluginClient::new(z);
+                                    let mut client_r = x.client.lock().unwrap();
+                                    *client_r = Some(client.clone());
                                     return Ok(client);
                                 },
                                 Err(e) => {
@@ -103,7 +106,7 @@ impl PluginRegistry {
             plugin_type: "execution".to_string(),
             version: info_parts[1].to_string(),
             active: Arc::new(Mutex::new(None)),
-            client: None
+            client: Arc::new(Mutex::new(None))
         });
         return Ok(());
     }
@@ -126,13 +129,17 @@ impl PluginRegistry {
         }
     }
 
-    pub async fn reap_all(self) -> Result<(), String> {
+    pub async fn reap_all(self) -> Result<(), std::io::Error> {
         for (k, x) in self.plugins {
             if x.active.lock().unwrap().is_some() {
                 let mut handle = x.active.lock().unwrap();
                 let mut_handle = handle.as_mut().unwrap();
                 mut_handle.kill();
-                std::fs::remove_file(format!("/tmp/tonic/{}", k));
+                let ret = std::fs::remove_file(format!("/tmp/tonic/{}", k));
+                match ret {
+                    Ok(_) => {},
+                    Err(e) => return Err(e)
+                }
             }
         }
         return Ok(());

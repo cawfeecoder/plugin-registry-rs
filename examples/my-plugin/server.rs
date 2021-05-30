@@ -67,6 +67,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let path = "/tmp/tonic/my_plugin";
 
+    if Path::new(path).exists() {
+        std::fs::remove_file(path);
+    }
+
     tokio::fs::create_dir_all(Path::new(path).parent().unwrap()).await?;
 
     let my_plugin = MyPlugin::default();
